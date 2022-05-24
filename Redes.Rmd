@@ -191,7 +191,7 @@ graph.density(EliteNet_giant)
 
 * Diameter: El mayor de los _geodesicos_ (el _sendero_(path) menor entre cualquier par de nodos)
 
-<center><img src="https://github.com/EvansDataScience/CTforGA_Networks/raw/main/diameter.jpeg" width="500"></center>
+![](diameter.jpeg)
 
 
 ```{r, eval=TRUE, message=FALSE}
@@ -215,7 +215,7 @@ average.path.length(EliteNet_giant)
 **Random networks** tienen *pequeños shortest path* and *pequeño clustering coefficient*.
 
 
-<center><img src="https://github.com/EvansDataScience/CTforGA_Networks/raw/main/networkTypes.jpeg" width="500"></center>
+![](networkTypes.jpeg)
 
 
 
@@ -247,6 +247,67 @@ colors=c('lightblue','magenta')
 plot.igraph(EliteNet_giant,
        vertex.color = colors[LabelsColor])
 ```
+
+
+
+### Comunidades
+
+* La red presenta cliques? (conjunto de nodos donde todos están conectados mutuamente)
+
+```{r, eval=TRUE, message=FALSE}
+length(cliques(EliteNet_giant))
+```
+
+Un clique puede estar anidado. Si un clique no puede crecer más (dejando de ser clique): **maximal clique**.
+
+![](cliqueMaximal.png)
+
+
+
+
+* Cuántos maximal cliques?
+```{r, eval=TRUE, message=FALSE}
+count_max_cliques(EliteNet_giant)
+```
+
+
+Tamaño del _maximal clique_:
+
+```{r, eval=TRUE, message=FALSE}
+clique_num(EliteNet_giant)
+```
+
+
+* Cuales son los más grandes?
+```{r, eval=TRUE, message=FALSE}
+max_cliques(EliteNet_giant,min=8)
+```
+
+Si hay cliques, es claro que hay  **comunidades**. Detectar comunidades es un área enorme de investigación, usemos uno de los algoritmos conocido como el  [método _Louvain_](https://perso.uclouvain.be/vincent.blondel/research/louvain.html).
+
+
+```{r, eval=TRUE, message=FALSE}
+communities=cluster_louvain(EliteNet_giant)
+(partition=membership(communities))
+```
+
+
+
+Ahora, usamos esos valores para resaltar las comunidades:
+
+```{r, eval=TRUE, message=FALSE}
+Labels=partition
+numberOfClasses = length(unique(Labels)) 
+
+library(RColorBrewer)
+colorForScale='Set2'
+colors = brewer.pal(numberOfClasses, colorForScale)
+
+plot.igraph(EliteNet_giant,
+             vertex.color = colors[Labels],
+             edge.color='lightblue')
+```
+
 
 
 
