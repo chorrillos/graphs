@@ -311,3 +311,116 @@ plot.igraph(EliteNet_giant,
 
 
 
+### Exploración de actores de la red
+
+Prestemos atención a los individuos de la red. Calculemos:
+
+- El **grado** o _degree_ de un nodo: la cantidad de enlaces que inciden en él. 
+- La **cercania** o _closeness_: Se basa en calcular la suma o bien el promedio de las distancias geodésicas (o longitudes de los caminos más cortos) desde un nodo hacia todos los demás.
+- La **intermediación** o *betweenness*:que cuantifica la frecuencia o el número de veces que un nodo se encuentra entre las geodésicas o caminos más cortos de otros actores.
+
+```{r, eval=TRUE, message=FALSE}
+rounding=3
+degr=round(degree(EliteNet_giant,normalized=T),rounding)
+close=round(closeness(EliteNet_giant,normalized=T),rounding)
+betw=round(betweenness(EliteNet_giant,normalized=T),rounding)
+
+DFCentrality=as.data.frame(cbind(degr,close,betw),stringsAsFactors = F)
+names(DFCentrality)=c('Degree','Closeness','Betweenness')
+```
+
+
+
+```{r, eval=TRUE, message=FALSE}
+DFCentrality$person=row.names(DFCentrality)
+row.names(DFCentrality)=NULL
+head(DFCentrality)
+```
+
+Graficamente:
+
+```{r, eval=TRUE, message=FALSE}
+library(ggplot2)
+ggplot(DFCentrality, aes(x=Betweenness, y=Closeness)) + theme_classic()+
+  scale_size(range = c(1, 25))  + geom_text(aes(label=person,color=Degree)) +
+  scale_colour_gradient(low = "yellow", high = "red")  + guides(color=F)
+```
+
+El nodo con el mayor **degree** se puede considerar un  _hub_ de la red:
+
+```{r, eval=TRUE, message=FALSE}
+DFCentrality[which.max(DFCentrality$Degree),]
+```
+
+
+Veamos la red del hub, o su _ego network_:
+
+1. Determiner el nombre del hub:
+```{r, eval=TRUE, message=FALSE}
+#who
+hub=DFCentrality[which.max(DFCentrality$Degree),]$person
+```
+
+2. Determinar la posición del hub:
+```{r, eval=TRUE, message=FALSE}
+
+#where
+hubix=as.numeric(row.names(DFCentrality[DFCentrality$person==hub,]))
+```
+
+3. Pedir la red ego del hub:
+
+```{r, eval=TRUE, message=FALSE}
+HubEgonets=make_ego_graph(EliteNet_giant, nodes=hubix)
+# HubEgonets es una list, pedimos el primer elemento:
+HubEgonet=HubEgonets[[1]]
+```
+
+4. Just plot the ego you got:
+```{r, eval=TRUE, message=FALSE}
+egoSizes=rep(5,vcount(HubEgonet)) # tamaño de todos
+egoSizes[hubix]=40  # tamaño del ego
+V(HubEgonet)$size=egoSizes 
+plot.igraph(HubEgonet,
+             vertex.color = 'yellow',
+             edge.color='lightblue')
+```
+
+Podríamos partir el _giant component_?
+
+Numero mínimo de nodos para desconectarlo:
+
+```{r, eval=TRUE, message=FALSE}
+vertex_connectivity(EliteNet_giant)
+```
+quienes la pueden partir?
+
+```{r, eval=TRUE, message=FALSE}
+articulation_points(EliteNet_giant)
+```
+
+```{r}
+V(EliteNet_giant)$color = ifelse(V(EliteNet_giant) %in%
+                    articulation_points(EliteNet_giant),   
+                    "salmon", "lightblue")
+V(EliteNet_giant)$size = ifelse(V(EliteNet_giant) %in%
+                    articulation_points(EliteNet_giant),   
+                    40, 10)
+
+
+plot.igraph(EliteNet_giant,
+             edge.color = 'yellow',
+            vertex.shape='sphere')
+```
+
+
+## Exportando la red
+
+
+
+```{r, eval=TRUE, message=FALSE}
+write_graph(EliteNet, "EliteNetR.graphml", "graphml")
+```
+
+
+
